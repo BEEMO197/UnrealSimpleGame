@@ -4,7 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Tile.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Camera/CameraComponent.h"
 #include "MyCharacter.generated.h"
+
 
 UCLASS()
 class DESN_PEREIRA_MATTHEW_API AMyCharacter : public ACharacter
@@ -20,10 +24,23 @@ protected:
 	virtual void BeginPlay() override;
 
 public:	
+
+	UPROPERTY(EditAnywhere)
+		USpringArmComponent* CameraSpringArm;
+		UCameraComponent* Camera;
+
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	// Handles input for moving forward and backward.
+	UFUNCTION()
+		void MoveForward(float Value);
+
+	// Handles input for moving right and left.
+	UFUNCTION()
+		void MoveRight(float Value);
 
 };
