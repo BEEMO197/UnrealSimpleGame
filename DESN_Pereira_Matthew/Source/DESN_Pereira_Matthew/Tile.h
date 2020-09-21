@@ -22,7 +22,8 @@ protected:
 
 public:	
 
-
+	UPROPERTY(EditAnywhere)
+		UStaticMeshComponent* TileMesh;
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 

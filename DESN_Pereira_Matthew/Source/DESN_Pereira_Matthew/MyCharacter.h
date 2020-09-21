@@ -7,6 +7,7 @@
 #include "Tile.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "MyCharacter.generated.h"
 
 
@@ -28,6 +29,8 @@ public:
 	UPROPERTY(EditAnywhere)
 		USpringArmComponent* CameraSpringArm;
 		UCameraComponent* Camera;
+		UCapsuleComponent* CapsuleComponent;
+		ATile* tile;
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

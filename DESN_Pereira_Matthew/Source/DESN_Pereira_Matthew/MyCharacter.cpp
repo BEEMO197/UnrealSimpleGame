@@ -10,9 +10,8 @@ AMyCharacter::AMyCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 
 	//Create our components
-	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
 	CameraSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraSpringArm"));
-	CameraSpringArm->SetupAttachment(RootComponent);
+	CameraSpringArm->SetupAttachment(GetRootComponent());
 	CameraSpringArm->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, 50.0f), FRotator(-45.0f, 0.0f, 0.0f));
 	CameraSpringArm->TargetArmLength = 400.f;
 	CameraSpringArm->bEnableCameraLag = true;
@@ -36,6 +35,7 @@ void AMyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	
 }
 
 // Called to bind functionality to input
