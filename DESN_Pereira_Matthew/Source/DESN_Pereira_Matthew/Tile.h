@@ -6,11 +6,11 @@
 #include "GameFramework/Actor.h"
 #include "Tile.generated.h"
 
+
 UCLASS()
 class DESN_PEREIRA_MATTHEW_API ATile : public AActor
 {
 	GENERATED_BODY()
-
 
 public:	
 	// Sets default values for this actor's properties
@@ -23,7 +23,17 @@ protected:
 public:	
 
 	UPROPERTY(EditAnywhere)
+		bool Hazzard = false;
+
+	UPROPERTY(EditAnywhere)
+		bool Obstacle = false;
+		
+	UPROPERTY(EditAnywhere)
 		UStaticMeshComponent* TileMesh;
+
+	TArray<UMaterial*> AvailableMaterials;
+
+	UMaterial* CurrentMaterial;
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 

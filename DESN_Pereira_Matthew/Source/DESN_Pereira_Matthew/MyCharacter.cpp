@@ -21,6 +21,7 @@ AMyCharacter::AMyCharacter()
 	Camera->SetupAttachment(CameraSpringArm, USpringArmComponent::SocketName);
 
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
+
 }
 
 // Called when the game starts or when spawned

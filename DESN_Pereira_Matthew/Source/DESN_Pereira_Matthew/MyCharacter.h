@@ -28,8 +28,11 @@ public:
 
 	UPROPERTY(EditAnywhere)
 		USpringArmComponent* CameraSpringArm;
+
+	UPROPERTY(EditAnywhere)
 		UCameraComponent* Camera;
-		UCapsuleComponent* CapsuleComponent;
+
+	UPROPERTY(EditAnywhere)
 		ATile* tile;
 
 	// Called every frame
