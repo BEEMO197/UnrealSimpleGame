@@ -37,13 +37,18 @@ void ATileMap::BeginPlay()
 				Grid.Add(world->SpawnActor<ATile>(ATile::StaticClass(), CurrentTileLocation, FRotator(0.f, 0.f, 0.f), spawnParms));
 
 				CurrentTileLocation.X += 100;
+
+				if (r % 2 == 0)
+					Grid.Last()->Hazzard = true;
+
+				else if (r % 7 == 0)
+					Grid.Last()->Obstacle = true;
+			
 			}
 			
 			CurrentTileLocation.X = StartX;
 			CurrentTileLocation.Y += 100;
 		}
-
-		Grid[50]->Hazzard = true;
 	}
 }
 

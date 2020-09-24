@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Components/BoxComponent.h"
 #include "Tile.generated.h"
 
 
@@ -31,10 +32,21 @@ public:
 	UPROPERTY(EditAnywhere)
 		UStaticMeshComponent* TileMesh;
 
+	UPROPERTY(EditAnywhere)
+		UBoxComponent* BoxComponent;
+
+	UPROPERTY(VisibleAnywhere)
+		TArray<ATile*> AdjacentTiles;
+
+	UPROPERTY(EditAnywhere)
+		bool selected = false;
+
 	TArray<UMaterial*> AvailableMaterials;
 
 	UMaterial* CurrentMaterial;
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	bool FoundTiles[4];
 
 };

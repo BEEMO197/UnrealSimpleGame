@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "Tile.h"
+#include "TileMap.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -35,6 +35,16 @@ public:
 	UPROPERTY(EditAnywhere)
 		ATile* tile;
 
+	bool moveableTilesSet = true;
+
+	UPROPERTY(EditAnywhere)
+		ATileMap* TileMapRef;
+
+	UPROPERTY(VisibleAnywhere)
+		AActor* FoundActor;
+
+	FHitResult* TileHit = new FHitResult(ForceInit);
+
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -49,4 +59,21 @@ public:
 	UFUNCTION()
 		void MoveRight(float Value);
 
+	// Handles Input for camera
+	UFUNCTION()
+		void AddControllerPitchCamera(float Value);
+
+	UFUNCTION()
+		void AddControllerYawCamera(float Value);
+
+
+	// Collison Functions
+	UFUNCTION()
+		void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit);
+
+	UFUNCTION()
+		void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+		void OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 };
