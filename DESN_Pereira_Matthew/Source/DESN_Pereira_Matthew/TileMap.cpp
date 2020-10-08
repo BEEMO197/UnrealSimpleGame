@@ -11,8 +11,8 @@ ATileMap::ATileMap()
 
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
 	
-	StartX = RootComponent->GetComponentLocation().X - (100 * Row / 2);
-	StartY = RootComponent->GetComponentLocation().Y - (100 * Column / 2);
+	StartX = RootComponent->GetComponentLocation().X - (200 * Row / 2);
+	StartY = RootComponent->GetComponentLocation().Y - (200 * Column / 2);
 	StartZ = RootComponent->GetComponentLocation().Z;
 
 	CurrentTileLocation = FVector(StartX, StartY, StartZ);	
@@ -36,18 +36,11 @@ void ATileMap::BeginPlay()
 				//Grid.Add(NewObject<ATile>(this, ATile::StaticClass()));
 				Grid.Add(world->SpawnActor<ATile>(ATile::StaticClass(), CurrentTileLocation, FRotator(0.f, 0.f, 0.f), spawnParms));
 
-				CurrentTileLocation.X += 100;
-
-				if (r % 2 == 0)
-					Grid.Last()->Hazzard = true;
-
-				else if (r % 7 == 0)
-					Grid.Last()->Obstacle = true;
-			
+				CurrentTileLocation.X += 200;
 			}
 			
 			CurrentTileLocation.X = StartX;
-			CurrentTileLocation.Y += 100;
+			CurrentTileLocation.Y += 200;
 		}
 	}
 }

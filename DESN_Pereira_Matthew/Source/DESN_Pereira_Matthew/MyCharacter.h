@@ -5,9 +5,12 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "TileMap.h"
+#include "Enemy.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Blueprint/AIBlueprintHelperLibrary.h"
+#include "GameFramework/PawnMovementComponent.h"
 #include "MyCharacter.generated.h"
 
 
@@ -26,27 +29,52 @@ protected:
 
 public:	
 
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	/*~~~~~~~~~~~~~~~~~~~~~~       COMPONENTS      ~~~~~~~~~~~~~~~~~~~~~~~~*/
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
 	UPROPERTY(EditAnywhere)
 		USpringArmComponent* CameraSpringArm;
 
 	UPROPERTY(EditAnywhere)
 		UCameraComponent* Camera;
 
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	/*~~~~~~~~~~~~~~~~~~~~~      VARIABLES       ~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+	// Current Tile standing on
 	UPROPERTY(EditAnywhere)
 		ATile* tile;
 
-	bool moveableTilesSet = true;
+	UPROPERTY(EditAnywhere)
+		AEnemy* enemy;
 
 	UPROPERTY(EditAnywhere)
-		ATileMap* TileMapRef;
+		bool attacking = false;
 
-	UPROPERTY(VisibleAnywhere)
-		AActor* FoundActor;
-
-	FHitResult* TileHit = new FHitResult(ForceInit);
+	bool goodSpawn = false;
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	/*~~~~~~~~~~~~~~~~~~~~      GAME FUNCTIONS       ~~~~~~~~~~~~~~~~~~~~~~*/
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	FTimerHandle AttackTimer;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		bool getAttacking();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		FVector getCharacterLocation();
+
+	UFUNCTION()
+		void ChangeAttack();
+
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	/*~~~~~~~~~~~~~~~~~      MOVEMENT / CAMERA       ~~~~~~~~~~~~~~~~~~~~~~*/
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -66,8 +94,20 @@ public:
 	UFUNCTION()
 		void AddControllerYawCamera(float Value);
 
+	// Handles Camera Zoom
+	UFUNCTION()
+		void ZoomCamera(float Value);
+
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	/*~~~~~~~~~~~~~~~~~~       EVENTS / DELEGATES       ~~~~~~~~~~~~~~~~~~~*/
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+	// Gets Mouse Input for Movement
+	UFUNCTION()
+		void OnClicked(UPrimitiveComponent* pComponent, FKey inKey);
 
 	// Collison Functions
+
 	UFUNCTION()
 		void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit);
 

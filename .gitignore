@@ -3,3 +3,11 @@ Saved/
 .pdb
 StarterContent/
 Intermediate/
+GameBuilds/
+*.dll
+*.pdb
+*.zip
+DESN_Pereira_Matthew/Binaries/Win64/DESN_Pereira_Matthew.target
+DESN_Pereira_Matthew/Binaries/Win64/DESN_Pereira_Matthew.lib
+DESN_Pereira_Matthew/Binaries/Win64/DESN_Pereira_Matthew.exp
+DESN_Pereira_Matthew/Binaries/Win64/DESN_Pereira_Matthew.exe
