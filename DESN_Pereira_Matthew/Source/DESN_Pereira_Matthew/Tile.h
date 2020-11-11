@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Components/BoxComponent.h"
-#include "Enemy.h"
 #include "Tile.generated.h"
 
 
@@ -17,6 +16,16 @@ enum TileType
 	Obstacle = 1 UMETA(DisplayName = "Obstacle"),
 	Hazzard = 2 UMETA(DisplayName = "Hazzard"),
 	Selected = 3 UMETA(DisplayName = "Selected"),
+};
+
+UENUM()
+enum TileDirectionFromPlayer
+{
+	CurrentTile = 0 UMETA(DisplayName = "Default"),
+	xPos = 1 UMETA(DisplayName = "X Positive"),
+	xNeg = 2 UMETA(DisplayName = "X Negative"),
+	yPos = 3 UMETA(DisplayName = "Y Positive"),
+	yNeg = 4 UMETA(DisplayName = "Y Negative"),
 };
 
 UCLASS()
@@ -60,10 +69,11 @@ public:
 
 	UPROPERTY(EditAnywhere)
 		TEnumAsByte<TileType> PreviousTileType;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+		TEnumAsByte<TileDirectionFromPlayer> tileDirectionFromPlayer;
 
-	UPROPERTY(EditAnywhere)
-		AEnemy* enemyOnTile = NULL;
-
+	int32 i = 0;
 	int32 randomNumber;
 
 	bool foundATiles;
@@ -71,6 +81,13 @@ public:
 	TArray<UMaterial*> AvailableMaterials;
 
 	UMaterial* CurrentMaterial;
+
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+	/*~~~~~~~~~~~~~~~~~~~      VARIABLE FUNCTIONS       ~~~~~~~~~~~~~~~~~~~*/
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		TArray<ATile*> GetAdjacentTiles();
 
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	/*~~~~~~~~~~~~~~~~~~       EVENTS / DELEGATES       ~~~~~~~~~~~~~~~~~~~*/

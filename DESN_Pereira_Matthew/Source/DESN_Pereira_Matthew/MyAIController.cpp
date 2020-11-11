@@ -15,6 +15,8 @@ AMyAIController::AMyAIController(FObjectInitializer const& object_initializer)
 	}
 	BehaviorTreeComponent = object_initializer.CreateDefaultSubobject<UBehaviorTreeComponent>(this, TEXT("BehaviourComp"));
 	blackboard = object_initializer.CreateDefaultSubobject<UBlackboardComponent>(this, TEXT("BlackboardComp"));
+
+	
 }
 
 void AMyAIController::BeginPlay()

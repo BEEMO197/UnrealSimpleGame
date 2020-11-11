@@ -2,7 +2,6 @@
 
 
 #include "Tile.h"
-#include "MyCharacter.h"
 
 // Sets default values
 ATile::ATile()
@@ -20,6 +19,8 @@ ATile::ATile()
 	{
 		CurrentTileType = Obstacle;
 	}
+
+	tileDirectionFromPlayer = CurrentTile;
 
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -64,6 +65,7 @@ ATile::ATile()
 
 	CurrentMaterial = AvailableMaterials[0];
 	TileMesh->SetMaterial(0, CurrentMaterial);
+
 }
 
 
@@ -93,32 +95,11 @@ void ATile::init()
 	}
 }
 
-void ATile::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+TArray<ATile*> ATile::GetAdjacentTiles()
 {
-	if (OtherActor->IsA<AEnemy>())
-	{
-		enemyOnTile = Cast<AEnemy>(OtherActor);
-		
-		enemyOnTile->EnemyMesh->OnClicked.AddDynamic(Cast<AMyCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)), &AMyCharacter::OnClicked);
-	}
-}
-
-void ATile::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-	if (OtherActor->IsA<AEnemy>())
-	{
-		enemyOnTile->EnemyMesh->OnClicked.RemoveDynamic(Cast<AMyCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)), &AMyCharacter::OnClicked);
-		enemyOnTile = NULL;
-	}
-}
-
-// Called every frame
-void ATile::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
 	FHitResult Outhit;
 
+	TArray<ATile*> walkableTiles;
 	if (!foundATiles)
 	{
 		// Get Front Tile
@@ -137,7 +118,8 @@ void ATile::Tick(float DeltaTime)
 			if (Outhit.bBlockingHit && Outhit.GetActor() != this)
 			{
 				foundATiles = true;
-				AdjacentTiles.Add((ATile*)Outhit.GetActor());
+				walkableTiles.Add((ATile*)Outhit.GetActor());
+				walkableTiles.Last()->tileDirectionFromPlayer = xPos;
 			}
 		}
 
@@ -153,7 +135,8 @@ void ATile::Tick(float DeltaTime)
 			if (Outhit.bBlockingHit && Outhit.GetActor() != this)
 			{
 				foundATiles = true;
-				AdjacentTiles.Add((ATile*)Outhit.GetActor());
+				walkableTiles.Add((ATile*)Outhit.GetActor());
+				walkableTiles.Last()->tileDirectionFromPlayer = xNeg;
 			}
 		}
 
@@ -168,7 +151,8 @@ void ATile::Tick(float DeltaTime)
 			if (Outhit.bBlockingHit && Outhit.GetActor() != this)
 			{
 				foundATiles = true;
-				AdjacentTiles.Add((ATile*)Outhit.GetActor());
+				walkableTiles.Add((ATile*)Outhit.GetActor());
+				walkableTiles.Last()->tileDirectionFromPlayer = yNeg;
 			}
 		}
 
@@ -183,11 +167,30 @@ void ATile::Tick(float DeltaTime)
 			if (Outhit.bBlockingHit && Outhit.GetActor() != this)
 			{
 				foundATiles = true;
-				AdjacentTiles.Add((ATile*)Outhit.GetActor());
+				walkableTiles.Add((ATile*)Outhit.GetActor());
+				walkableTiles.Last()->tileDirectionFromPlayer = yPos;
 			}
 		}
 	}
-	
+
+	return walkableTiles;
+}
+
+void ATile::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+
+}
+
+void ATile::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+
+}
+
+// Called every frame
+void ATile::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
 	switch (CurrentTileType)
 	{
 	case Default:

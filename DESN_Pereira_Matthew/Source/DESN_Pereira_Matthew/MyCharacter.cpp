@@ -15,6 +15,7 @@ AMyCharacter::AMyCharacter()
 	// Set Character Size
 	//RootComponent->SetWorldScale3D(FVector(0.75f));
 
+	// Setup CameraSpringArm
 	CameraSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraSpringArm"));
 	CameraSpringArm->SetupAttachment(RootComponent);
 	CameraSpringArm->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, 50.0f), FRotator(-45.0f, 0.0f, 0.0f));
@@ -22,15 +23,23 @@ AMyCharacter::AMyCharacter()
 	CameraSpringArm->bEnableCameraLag = true;
 	CameraSpringArm->CameraLagSpeed = 3.0f;
 
+	// Setup Camera
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("GameCamera"));
 	Camera->SetupAttachment(CameraSpringArm, USpringArmComponent::SocketName);
 
+	// Setup Sphere Collision for Enemies
+	SphereCol = CreateDefaultSubobject<USphereComponent>(TEXT("SphereCollision"));
+	SphereCol->SetupAttachment(RootComponent);
+	SphereCol->SetSphereRadius(300.f);
+	SphereCol->OnComponentBeginOverlap.AddDynamic(this, &AMyCharacter::OnSphereOverlapBegin);
+	SphereCol->OnComponentEndOverlap.AddDynamic(this, &AMyCharacter::OnSphereOverlapEnd);
+
+	// Setup Capsule Collision for movement
 	GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &AMyCharacter::OnHit);
 	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AMyCharacter::OnOverlapBegin);
 	GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &AMyCharacter::OnOverlapEnd);
 
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
-
 }
 
 // Called when the game starts or when spawned
@@ -44,6 +53,10 @@ void AMyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	//GEngine->AddOnScreenDebugMessage(-2, 0, FColor::MakeRandomColor(), GetActorLocation().ToString());
+	if (enemies.Num() > 0)
+	{
+		//GEngine->AddOnScreenDebugMessage(5, 0, FColor::Green, "OnClicked() called to " + enemies.Last()->GetName());
+	}
 }
 
 bool AMyCharacter::getAttacking()
@@ -134,17 +147,55 @@ void AMyCharacter::ZoomCamera(float Value)
 
 void AMyCharacter::OnClicked(UPrimitiveComponent* pComponent, FKey inKey)
 {
-	//GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::Green, "OnClicked() called to " +	pComponent->GetOwner()->GetName());
 	int32 count = 0;
 
 	FVector moveToLocation;
 	FVector rotationVector;
 	FRotator rotation;
-	//GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::Green, "OnClicked() called to " + pComponent->GetOwner()->GetClass()->GetDisplayNameText().ToString());
 
-	for (auto adjTile : tile->AdjacentTiles)
+	FTimerHandle attackChange;
+
+	// Click on enemy
+	//for (AMyEnemy* enemy : enemies)
+	//{
+	//	//GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::Cyan, "OnClicked() called to " + pComponent->GetOwner()->GetName());
+	//	if (enemy == pComponent->GetOwner())
+	//	{
+	//		//GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::Blue, "OnClicked() called to " + pComponent->GetOwner()->GetClass()->GetDisplayNameText().ToString());
+	//
+	//		rotationVector = FVector(enemy->GetEnemyLocation() - GetActorLocation());
+	//		rotationVector.Normalize();
+	//		rotation = rotationVector.Rotation();
+	//		rotation.Roll = 0.f;
+	//		rotation.Pitch = 0.f;
+	//		rotation.Yaw -= 90.f;
+	//		GetMesh()->SetWorldRotation(rotation);
+	//
+	//		attacking = true;
+	//		GetWorld()->GetTimerManager().SetTimer(attackChange, this, &AMyCharacter::ChangeAttack, 1.0f, false);
+	//		continue;
+	//	}
+	//}
+
+	if (pComponent->GetOwner()->IsA<AMyEnemy>())
 	{
-		if (adjTile == pComponent->GetOwner() || adjTile->enemyOnTile == pComponent->GetOwner())
+		GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::MakeRandomColor(), "OnClicked() called to " + pComponent->GetOwner()->GetName());
+
+		rotationVector = FVector(Cast<AMyEnemy>(pComponent->GetOwner())->GetEnemyLocation() - GetActorLocation());
+		rotationVector.Normalize();
+		rotation = rotationVector.Rotation();
+		rotation.Roll = 0.f;
+		rotation.Pitch = 0.f;
+		rotation.Yaw -= 90.f;
+		GetMesh()->SetWorldRotation(rotation);
+
+		attacking = true;
+		GetWorld()->GetTimerManager().SetTimer(attackChange, this, &AMyCharacter::ChangeAttack, 1.0f, false);
+	}
+
+	for (auto adjTile : walkableTiles)
+	{
+		if (adjTile == pComponent->GetOwner())
 		{
 			switch (count)
 			{
@@ -152,28 +203,28 @@ void AMyCharacter::OnClicked(UPrimitiveComponent* pComponent, FKey inKey)
 			case 0:
 				moveToLocation = adjTile->BoxComponent->GetComponentLocation();
 				//moveToLocation.X += 75.f;
-				moveToLocation.Z += 88.f;
+				//moveToLocation.Z += 88.f;
 				break;
 
 				// Back Tile
 			case 1:
 				moveToLocation = adjTile->BoxComponent->GetComponentLocation();
 				//moveToLocation.X -= 75.f;
-				moveToLocation.Z += 88.f;
+				//moveToLocation.Z += 88.f;
 				break;
 
 				// Left Tile
 			case 2:
 				moveToLocation = adjTile->BoxComponent->GetComponentLocation();
 				//moveToLocation.Y -= 75.f;
-				moveToLocation.Z += 88.f;
+				//moveToLocation.Z += 88.f;
 				break;
 
 				// Right Tile
 			case 3:
 				moveToLocation = adjTile->BoxComponent->GetComponentLocation();
 				//moveToLocation.Y += 75.f;
-				moveToLocation.Z += 88.f;
+				//moveToLocation.Z += 88.f;
 				break;
 				
 			default:
@@ -187,21 +238,13 @@ void AMyCharacter::OnClicked(UPrimitiveComponent* pComponent, FKey inKey)
 			rotation.Pitch = 0.f;
 			rotation.Yaw -= 90.f;
 			GetMesh()->SetWorldRotation(rotation);
-			
-			if (adjTile->enemyOnTile != NULL || adjTile->enemyOnTile == pComponent->GetOwner())
-			{
-				attacking = true;
-				GetWorldTimerManager().SetTimer(AttackTimer, this, &AMyCharacter::ChangeAttack, 1.f, false);
-				continue;
-			}
 
 			UAIBlueprintHelperLibrary::SimpleMoveToLocation(GetController(), moveToLocation);
 
 			continue;
 		}
 		count++;
-	}
-	
+	}	
 }
 
 void AMyCharacter::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit)
@@ -212,16 +255,20 @@ void AMyCharacter::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, 
 void AMyCharacter::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	//GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::Blue, FString("OnBeginOverlap() called With: ") + OtherActor->GetName());
-	tile = (ATile*)OtherActor;
+
+	if (OtherActor->IsA<ATile>())
+	{
+		tile = (ATile*)OtherActor;
+	}
 
 	if (IsValid(tile))
 	{
-		for (auto adjTile : tile->AdjacentTiles)
+		walkableTiles = tile->GetAdjacentTiles();
+		for (auto adjTile : walkableTiles)
 		{
 			adjTile->PreviousTileType = adjTile->CurrentTileType;
 			adjTile->CurrentTileType = TileType::Selected;
 			adjTile->TileMesh->OnClicked.AddDynamic(this, &AMyCharacter::OnClicked);
-			
 		}
 	}
 }
@@ -232,14 +279,49 @@ void AMyCharacter::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* Oth
 
 	if (tile != nullptr)
 	{
-		for (auto adjTile : tile->AdjacentTiles)
+
+		for (auto adjTile : walkableTiles)
 		{
 			adjTile->CurrentTileType = adjTile->PreviousTileType;
-			adjTile->TileMesh->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
-
 			adjTile->TileMesh->OnClicked.RemoveDynamic(this, &AMyCharacter::OnClicked);
-			
 		}
+
+		walkableTiles.Empty();
+		tile->foundATiles = false;
 		tile = nullptr;
+	}
+}
+
+void AMyCharacter::OnSphereOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	//GEngine->AddOnScreenDebugMessage(INDEX_NONE, 100, FColor::MakeRandomColor(), FString("OnSphereBeginOverlap() called With: ") + OtherComp->GetName());
+
+	FTimerHandle attackChange;
+
+	if (OtherActor->IsA<AMyEnemy>())
+	{
+		if (OtherComp->IsA<USkeletalMeshComponent>())
+		{
+			//Cast<AMyEnemy>(OtherActor)->GetMesh()->OnClicked.AddDynamic(this, &AMyCharacter::OnClicked);
+			enemies.Add(Cast<AMyEnemy>(OtherActor));
+			enemies.Last()->GetMesh()->OnClicked.AddDynamic(this, &AMyCharacter::OnClicked);
+			//GEngine->AddOnScreenDebugMessage(INDEX_NONE, 100, FColor::MakeRandomColor(), FString("OnSphereBeginOverlap() called With: ") + OtherComp->GetName());
+			//OtherComp->OnClicked.AddDynamic(this, &AMyCharacter::OnClicked);
+		}
+
+		//GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::Blue, FString("OnSphereBeginOverlap() called With: ") + OtherActor->GetName());
+	}
+}
+
+void AMyCharacter::OnSphereOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	//GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::Blue, FString("OnSphereEndOverlap() called With: ") + OtherActor->GetName());
+	for(AMyEnemy* enemy : enemies)
+	{
+		if (enemy == OtherActor)
+		{
+			enemy->GetMesh()->OnClicked.RemoveDynamic(this, &AMyCharacter::OnClicked);
+			enemies.Remove(enemy);
+		}
 	}
 }

@@ -4,11 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "TileMap.h"
-#include "Enemy.h"
+#include "MyEnemy.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SphereComponent.h"
+#include "Components/SplineComponent.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "GameFramework/PawnMovementComponent.h"
 #include "MyCharacter.generated.h"
@@ -39,6 +40,9 @@ public:
 	UPROPERTY(EditAnywhere)
 		UCameraComponent* Camera;
 
+	UPROPERTY(EditAnywhere)
+		USphereComponent* SphereCol;
+
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	/*~~~~~~~~~~~~~~~~~~~~~      VARIABLES       ~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -48,7 +52,10 @@ public:
 		ATile* tile;
 
 	UPROPERTY(EditAnywhere)
-		AEnemy* enemy;
+		TArray<ATile*> walkableTiles;
+
+	UPROPERTY(EditAnywhere)
+		TArray<AMyEnemy*> enemies;
 
 	UPROPERTY(EditAnywhere)
 		bool attacking = false;
@@ -116,4 +123,10 @@ public:
 
 	UFUNCTION()
 		void OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	UFUNCTION()
+		void OnSphereOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+		void OnSphereOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 };

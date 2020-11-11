@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Tile.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"
 #include "MyEnemy.generated.h"
 
@@ -21,19 +23,51 @@ protected:
 
 public:	
 
+	AActor* characterActor;
+
+	UPROPERTY(EditAnywhere)
+		FTimerHandle attackingTimer;
+
+	UPROPERTY(EditAnywhere)
+		bool AnimationAttack = false;
+
 	UPROPERTY(EditAnywhere)
 		bool IsAttacking = false;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
+		bool GetAnimationAttack();
+
+	UFUNCTION(BlueprintCallable)
+		void SetAnimationAttack(bool animAttack);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
 		bool GetIsAttacking();
+
+	UFUNCTION(BlueprintCallable)
+		void SetIsAttacking();
+
+	UPROPERTY(EditAnywhere)
+		ATile* tile;
+
+	UPROPERTY(EditAnywhere)
+		TArray<ATile*> walkableTiles;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		ATile* GetTile();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		TArray<ATile*> GetWalkableTiles();
+
+	UFUNCTION()
+		void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+		void OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		FVector GetEnemyLocation();
-
-	// Called to bind functionality to input
-	//virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 };
