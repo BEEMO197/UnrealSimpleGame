@@ -15,7 +15,7 @@ ATileMap::ATileMap()
 	StartY = RootComponent->GetComponentLocation().Y - (200 * Column / 2);
 	StartZ = RootComponent->GetComponentLocation().Z;
 
-	CurrentTileLocation = FVector(StartX, StartY, StartZ);	
+	CurrentTileLocation = FVector(StartX, StartY, StartZ);
 }
 
 // Called when the game starts or when spawned

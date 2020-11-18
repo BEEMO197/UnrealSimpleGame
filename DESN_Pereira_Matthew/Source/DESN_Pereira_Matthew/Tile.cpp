@@ -20,8 +20,6 @@ ATile::ATile()
 		CurrentTileType = Obstacle;
 	}
 
-	tileDirectionFromPlayer = CurrentTile;
-
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -43,29 +41,35 @@ ATile::ATile()
 	UStaticMesh* Asset = MeshAsset.Object;
 	TileMesh->SetStaticMesh(Asset);
 
-	ConstructorHelpers::FObjectFinder<UMaterial>TileMaterial(TEXT("Material'/Game/Assets/Materials/TileColour.TileColour'"));
+	ConstructorHelpers::FObjectFinder<UMaterial>TileMaterial(TEXT("Material'/Game/StarterContent/Materials/M_CobbleStone_Pebble.M_CobbleStone_Pebble'"));
 	UMaterial* Material = TileMaterial.Object;
 
 	AvailableMaterials.Add(Material);
 
-	ConstructorHelpers::FObjectFinder<UMaterial>TileMaterial1(TEXT("Material'/Game/Assets/Materials/Obstacle.Obstacle'"));
+	ConstructorHelpers::FObjectFinder<UMaterial>TileMaterial1(TEXT("Material'/Game/StarterContent/Materials/M_Brick_Clay_Beveled.M_Brick_Clay_Beveled'"));
 	Material = TileMaterial1.Object;
 
 	AvailableMaterials.Add(Material);
 
-	ConstructorHelpers::FObjectFinder<UMaterial>TileMaterial2(TEXT("Material'/Game/Assets/Materials/Hazzard.Hazzard'"));
+	ConstructorHelpers::FObjectFinder<UMaterial>TileMaterial2(TEXT("Material'/Game/StarterContent/Materials/M_Water_Ocean.M_Water_Ocean'"));
 	Material = TileMaterial2.Object;
 
 	AvailableMaterials.Add(Material);
 
-	ConstructorHelpers::FObjectFinder<UMaterial>TileMaterial3(TEXT("Material'/Game/Assets/Materials/Moveable.Moveable'"));
+	ConstructorHelpers::FObjectFinder<UMaterial>TileMaterial3(TEXT("Material'/Game/StarterContent/Materials/M_CobbleStone_Pebble_2.M_CobbleStone_Pebble_2'"));
 	Material = TileMaterial3.Object;
+
+	AvailableMaterials.Add(Material);
+
+	ConstructorHelpers::FObjectFinder<UMaterial>TileMaterial4(TEXT("Material'/Game/StarterContent/Materials/M_Water_Ocean_2.M_Water_Ocean_2'"));
+	Material = TileMaterial4.Object;
 
 	AvailableMaterials.Add(Material);
 
 	CurrentMaterial = AvailableMaterials[0];
 	TileMesh->SetMaterial(0, CurrentMaterial);
 
+	isActorOnTile = false;
 }
 
 
@@ -95,6 +99,11 @@ void ATile::init()
 	}
 }
 
+TArray<TEnumAsByte<TileDirectionFromPlayer>> ATile::GetTileDirectionsFromPlayer()
+{
+	return tileDirectionsFromPlayer;
+}
+
 TArray<ATile*> ATile::GetAdjacentTiles()
 {
 	FHitResult Outhit;
@@ -119,7 +128,7 @@ TArray<ATile*> ATile::GetAdjacentTiles()
 			{
 				foundATiles = true;
 				walkableTiles.Add((ATile*)Outhit.GetActor());
-				walkableTiles.Last()->tileDirectionFromPlayer = xPos;
+				tileDirectionsFromPlayer.Add(TileDirectionFromPlayer::xPos);
 			}
 		}
 
@@ -136,7 +145,7 @@ TArray<ATile*> ATile::GetAdjacentTiles()
 			{
 				foundATiles = true;
 				walkableTiles.Add((ATile*)Outhit.GetActor());
-				walkableTiles.Last()->tileDirectionFromPlayer = xNeg;
+				tileDirectionsFromPlayer.Add(TileDirectionFromPlayer::xNeg);
 			}
 		}
 
@@ -152,7 +161,7 @@ TArray<ATile*> ATile::GetAdjacentTiles()
 			{
 				foundATiles = true;
 				walkableTiles.Add((ATile*)Outhit.GetActor());
-				walkableTiles.Last()->tileDirectionFromPlayer = yNeg;
+				tileDirectionsFromPlayer.Add(TileDirectionFromPlayer::yNeg);
 			}
 		}
 
@@ -168,7 +177,7 @@ TArray<ATile*> ATile::GetAdjacentTiles()
 			{
 				foundATiles = true;
 				walkableTiles.Add((ATile*)Outhit.GetActor());
-				walkableTiles.Last()->tileDirectionFromPlayer = yPos;
+				tileDirectionsFromPlayer.Add(TileDirectionFromPlayer::yPos);
 			}
 		}
 	}
@@ -178,12 +187,12 @@ TArray<ATile*> ATile::GetAdjacentTiles()
 
 void ATile::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-
+	isActorOnTile = true;
 }
 
 void ATile::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-
+	isActorOnTile = false;
 }
 
 // Called every frame
@@ -207,6 +216,10 @@ void ATile::Tick(float DeltaTime)
 
 	case Selected:
 		CurrentMaterial = AvailableMaterials[3];
+		break;
+
+	case SelectedHazzard:
+		CurrentMaterial = AvailableMaterials[4];
 		break;
 
 	default:

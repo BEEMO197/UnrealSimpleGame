@@ -4,12 +4,28 @@
 #include "MyEnemy.h"
 #include "MyCharacter.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "UObject/ConstructorHelpers.h"
 
 // Sets default values
 AMyEnemy::AMyEnemy()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	health = 30;
+	maxHealth = health;
+
+	healthBar = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBar"));
+	healthBar->SetupAttachment(GetCapsuleComponent());
+	healthBar->SetRelativeLocation(FVector(-5.0f, 0.0f, 100.0f));
+	healthBar->SetDrawSize(FVector2D(100.0f, 10.0f));
+
+	// Setup Sphere Collision for Enemies
+	SphereCol = CreateDefaultSubobject<USphereComponent>(TEXT("SphereCollision"));
+	SphereCol->SetupAttachment(RootComponent);
+	SphereCol->SetSphereRadius(300.f);
+	SphereCol->OnComponentBeginOverlap.AddDynamic(this, &AMyEnemy::OnSphereOverlapBegin);
+	SphereCol->OnComponentEndOverlap.AddDynamic(this, &AMyEnemy::OnSphereOverlapEnd);
 
 	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AMyEnemy::OnOverlapBegin);
 	GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &AMyEnemy::OnOverlapEnd);
@@ -19,7 +35,24 @@ AMyEnemy::AMyEnemy()
 void AMyEnemy::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	FRandomStream FStream;
+	FStream.GenerateNewSeed();
+	float randXPosNeg = FStream.RandRange(1, 2);
+	float randYPosNeg = FStream.RandRange(1, 2);
+	float randX = FStream.RandRange(0, 5) * 200 * (randXPosNeg == 1 ? -1 : 1);
+	float randY = FStream.RandRange(0, 5) * 200 * (randYPosNeg == 1 ? -1 : 1);
+
+	if (randX > 800)
+	{
+		randX = 800;
+	}
+
+	if (randY > 800)
+	{
+		randY = 800;
+	}
+	SetActorLocation(FVector(randX, randY, GetActorLocation().Z + 500));
 }
 
 // Called every frame
@@ -29,9 +62,13 @@ void AMyEnemy::Tick(float DeltaTime)
 
 	if (IsAttacking)
 	{
-		
 		SetActorRotation(UKismetMathLibrary::FindLookAtRotation(GetEnemyLocation(), FVector(characterActor->GetActorLocation().X, characterActor->GetActorLocation().Y, GetEnemyLocation().Z)));
 	}
+}
+
+UWidgetComponent* AMyEnemy::getHealthBarWidge()
+{
+	return healthBar;
 }
 
 FVector AMyEnemy::GetEnemyLocation()
@@ -54,6 +91,46 @@ void AMyEnemy::SetAnimationAttack(bool animAttack)
 	AnimationAttack = animAttack;
 }
 
+void AMyEnemy::Damage(int32 damage)
+{
+	FString DamagePrnt = "Health: ";
+	DamagePrnt.AppendInt(health);
+	DamagePrnt.Append(" / ");
+	DamagePrnt.AppendInt(maxHealth);
+
+
+	GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::Turquoise, DamagePrnt);
+
+	health -= damage;
+}
+
+int32 AMyEnemy::GetHealth()
+{
+	return health;
+}
+
+int32 AMyEnemy::GetMaxHealth()
+{
+	return maxHealth;
+}
+
+bool AMyEnemy::GetIsDying()
+{
+	return isDying;
+}
+
+void AMyEnemy::SetIsDying(bool Dying)
+{
+	isDying = Dying;
+	FTimerHandle deathChange;
+	GetWorld()->GetTimerManager().SetTimer(deathChange, this, &AMyEnemy::DestroyDeadEnemy, 3.0f, false);
+}
+
+void AMyEnemy::DestroyDeadEnemy()
+{
+	Destroy();
+}
+
 void AMyEnemy::SetIsAttacking()
 {
 	IsAttacking = !IsAttacking;
@@ -71,69 +148,77 @@ TArray<ATile*> AMyEnemy::GetWalkableTiles()
 
 void AMyEnemy::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	//GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::Blue, FString("OnBeginOverlap() called With: ") + OtherActor->GetName());
+	GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::Turquoise, FString("OnBeginOverlap() called With: ") + OtherActor->GetName());
 
 	if (OtherActor->IsA<ATile>())
 	{
 		tile = (ATile*)OtherActor;
-	}
-	else if (OtherActor->IsA<AMyCharacter>())
-	{
-		//FTimerHandle attackingTimer;
-		//GetWorld()->GetTimerManager().SetTimer(attackingTimer, this, &AMyEnemy::SetIsAttacking, 1.0f, true);
-		characterActor = OtherActor;
-		IsAttacking = true;
-	}
+		if (tile->CurrentTileType == TileType::Obstacle)
+		{
+			FRandomStream FStream;
+			FStream.GenerateNewSeed();
+			float randXPosNeg = FStream.RandRange(1, 2);
+			float randYPosNeg = FStream.RandRange(1, 2);
+			float randX = FStream.RandRange(0, 5) * 200 * (randXPosNeg == 1 ? -1 : 1);
+			float randY = FStream.RandRange(0, 5) * 200 * (randYPosNeg == 1 ? -1 : 1);
 
+			if (randX > 800)
+			{
+				randX = 800;
+			}
+
+			if (randY > 800)
+			{
+				randY = 800;
+			}
+			SetActorLocation(FVector(randX, randY, GetActorLocation().Z + 500));
+		}
+	}
 	if (IsValid(tile))
 	{
 		walkableTiles = tile->GetAdjacentTiles();
-		for (auto adjTile : walkableTiles)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::Blue, adjTile->GetName());
-			switch (adjTile->tileDirectionFromPlayer)
-			{
-
-			case CurrentTile:
-				GEngine->AddOnScreenDebugMessage(1, 5, FColor::MakeRandomColor(), "Current Tile");
-				break;
-
-			case xPos:
-				GEngine->AddOnScreenDebugMessage(2, 5, FColor::MakeRandomColor(), "x Positive");
-				break;
-
-			case xNeg:
-				GEngine->AddOnScreenDebugMessage(3, 5, FColor::MakeRandomColor(), "x Negative");
-				break;
-
-			case yPos:
-				GEngine->AddOnScreenDebugMessage(4, 5, FColor::MakeRandomColor(), "y Positive");
-				break;
-
-			case yNeg:
-				GEngine->AddOnScreenDebugMessage(5, 5, FColor::MakeRandomColor(), "y Negative");
-				break;
-
-			default:
-				break;
-			}
-		}
 	}
 }
 
 void AMyEnemy::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	//GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::Blue, FString("OnEndOverlap() called With: ") + OtherActor->GetName());
+	GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::Blue, FString("OnEndOverlap() called With: ") + OtherActor->GetName());
 
-	if (tile != nullptr)
+	if (OtherActor->IsA<ATile>())
 	{
-		walkableTiles.Empty();
-		tile->foundATiles = false;
-		tile = nullptr;
+		if (tile != nullptr)
+		{
+			walkableTiles.Empty();
+			tile->tileDirectionsFromPlayer.Empty();
+			tile->foundATiles = false;
+			tile = nullptr;
+		}
 	}
+}
+
+void AMyEnemy::OnSphereOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
 
 	if (OtherActor->IsA<AMyCharacter>())
 	{
-		IsAttacking = false;
+		if (OtherComp->IsA<USkeletalMeshComponent>())
+		{
+			characterActor = OtherActor;
+			IsAttacking = true;
+		}
+
+		//GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::Blue, FString("OnSphereBeginOverlap() called With: ") + OtherActor->GetName());
+	}
+}
+
+void AMyEnemy::OnSphereOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+
+	if (OtherActor->IsA<AMyCharacter>())
+	{
+		if (OtherComp->IsA<USkeletalMeshComponent>())
+		{
+			IsAttacking = false;
+		}
 	}
 }

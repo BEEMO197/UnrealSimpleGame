@@ -12,6 +12,8 @@
 #include "Components/SplineComponent.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "GameFramework/PawnMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Weapon.h"
 #include "MyCharacter.generated.h"
 
 
@@ -47,6 +49,20 @@ public:
 	/*~~~~~~~~~~~~~~~~~~~~~      VARIABLES       ~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
+	UPROPERTY(EditAnywhere)
+		int enemyCount;
+
+	Weapon weapon;
+
+	UPROPERTY(EditAnywhere)
+		int32 health;
+
+	UPROPERTY(EditAnywhere)
+		int32 maxHealth;
+
+	UPROPERTY(EditAnywhere)
+		UWidgetComponent* healthBar;
+
 	// Current Tile standing on
 	UPROPERTY(EditAnywhere)
 		ATile* tile;
@@ -55,7 +71,10 @@ public:
 		TArray<ATile*> walkableTiles;
 
 	UPROPERTY(EditAnywhere)
-		TArray<AMyEnemy*> enemies;
+		TArray<AActor*> enemies;
+
+	UPROPERTY(EditAnywhere)
+		bool canAttack = true;
 
 	UPROPERTY(EditAnywhere)
 		bool attacking = false;
@@ -67,8 +86,23 @@ public:
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
+	FTimerHandle HazzardDamageTimer;
 	FTimerHandle AttackTimer;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		UWidgetComponent* getHealthBarWidge();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		int32 GetHealth();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		int32 GetMaxHealth();
+
+	UFUNCTION(BlueprintCallable)
+		void Damage(int32 damage);
+
+	UFUNCTION(BlueprintCallable)
+		void HazzardDamage();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		bool getAttacking();
@@ -77,7 +111,10 @@ public:
 		FVector getCharacterLocation();
 
 	UFUNCTION()
-		void ChangeAttack();
+		void ChangeAttack(AMyEnemy* enemy);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		WeaponType GetCurrentWeapon();
 
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	/*~~~~~~~~~~~~~~~~~      MOVEMENT / CAMERA       ~~~~~~~~~~~~~~~~~~~~~~*/
@@ -104,6 +141,9 @@ public:
 	// Handles Camera Zoom
 	UFUNCTION()
 		void ZoomCamera(float Value);
+
+	UFUNCTION()
+		void ChangeWeapons();
 
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	/*~~~~~~~~~~~~~~~~~~       EVENTS / DELEGATES       ~~~~~~~~~~~~~~~~~~~*/

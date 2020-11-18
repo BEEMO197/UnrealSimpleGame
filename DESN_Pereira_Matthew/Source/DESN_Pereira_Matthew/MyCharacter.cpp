@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
+#include "RangedAOEAttack.h"
 #include "MyCharacter.h"
 
 // Sets default values
@@ -14,6 +15,16 @@ AMyCharacter::AMyCharacter()
 
 	// Set Character Size
 	//RootComponent->SetWorldScale3D(FVector(0.75f));
+	weapon.currentWeapon = WeaponType::Melee;
+
+	health = 100;
+	maxHealth = health;
+
+	healthBar = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBar"));
+	healthBar->SetupAttachment(GetCapsuleComponent());
+	healthBar->SetRelativeLocation(FVector(-5.0f, 0.0f, 100.0f));
+	healthBar->SetDrawSize(FVector2D(100.0f, 10.0f));
+	healthBar->SetWidgetSpace(EWidgetSpace::Screen);
 
 	// Setup CameraSpringArm
 	CameraSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraSpringArm"));
@@ -46,16 +57,74 @@ AMyCharacter::AMyCharacter()
 void AMyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	FRandomStream FStream;
+	FStream.GenerateNewSeed();
+	float randXPosNeg = FStream.RandRange(1, 2);
+	float randYPosNeg = FStream.RandRange(1, 2);
+	float randX = FStream.RandRange(0, 5) * 200 * (randXPosNeg == 1 ? -1 : 1);
+	float randY = FStream.RandRange(0, 5) * 200 * (randYPosNeg == 1 ? -1 : 1);
+
+	if (randX > 800)
+	{
+		randX = 800;
+	}
+
+	if (randY > 800)
+	{
+		randY = 800;
+	}
+	SetActorLocation(FVector(randX, randY, GetActorLocation().Z + 500));
+
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AMyEnemy::StaticClass(), enemies);
+	enemyCount = enemies.Num();
 }
 
 // Called every frame
 void AMyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	//GEngine->AddOnScreenDebugMessage(-2, 0, FColor::MakeRandomColor(), GetActorLocation().ToString());
-	if (enemies.Num() > 0)
+}
+
+UWidgetComponent* AMyCharacter::getHealthBarWidge()
+{
+	return healthBar;
+}
+
+int32 AMyCharacter::GetHealth()
+{
+	return health;
+}
+
+int32 AMyCharacter::GetMaxHealth()
+{
+	return maxHealth;
+}
+
+void AMyCharacter::Damage(int32 damage)
+{
+	health -= damage;
+	
+	FString damageString;
+	damageString = "Health: ";
+	damageString.AppendInt(health);
+	damageString.Append(" / ");
+	damageString.AppendInt(maxHealth);
+
+	GEngine->AddOnScreenDebugMessage(3, 5.0f, FColor::Emerald, damageString);
+}
+
+void AMyCharacter::HazzardDamage()
+{
+	health -= 5;
+
+	if (health <= 0)
 	{
-		//GEngine->AddOnScreenDebugMessage(5, 0, FColor::Green, "OnClicked() called to " + enemies.Last()->GetName());
+		FInputModeUIOnly ui;
+		UGameplayStatics::GetPlayerController(GetWorld(), 0)->SetInputMode(ui);
+		UGameplayStatics::GetPlayerController(GetWorld(), 0)->bShowMouseCursor = true;
+
+		UGameplayStatics::OpenLevel(GetWorld(), "GameOverState");
 	}
 }
 
@@ -64,14 +133,33 @@ bool AMyCharacter::getAttacking()
 	return attacking;
 }
 
+
 FVector AMyCharacter::getCharacterLocation()
 {
 	return GetActorLocation();
 }
 
-void AMyCharacter::ChangeAttack()
+void AMyCharacter::ChangeAttack(AMyEnemy* enemy)
 {
+	enemy->Damage(weapon.weaponDamage);
+	if (enemy->GetHealth() <= 0)
+	{
+		enemyCount--;
+		enemy->SetIsDying(true);
+	}
+
+	if (enemyCount <= 0)
+	{
+		UGameplayStatics::OpenLevel(GetWorld(), "Minimal_Default");
+	}
+
+	canAttack = true;
 	attacking = false;
+}
+
+WeaponType AMyCharacter::GetCurrentWeapon()
+{
+	return weapon.currentWeapon;
 }
 
 // Called to bind functionality to input
@@ -89,6 +177,7 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 	PlayerInputComponent->BindAxis("Zoom", this, &AMyCharacter::ZoomCamera);
 
+	PlayerInputComponent->BindAction("ChangeWeapon", EInputEvent::IE_Pressed, this, &AMyCharacter::ChangeWeapons);
 	
 	APlayerController* MyController = GetWorld()->GetFirstPlayerController();
 
@@ -145,6 +234,36 @@ void AMyCharacter::ZoomCamera(float Value)
 	CameraSpringArm->TargetArmLength = zoom;
 }
 
+void AMyCharacter::ChangeWeapons()
+{
+	switch (weapon.currentWeapon)
+	{
+	case WeaponType::Melee:
+		weapon.currentWeapon = WeaponType::Ranged;
+		weapon.weaponDamage = 10;
+		SphereCol->SetSphereRadius(600.0f);
+		break;
+
+	case WeaponType::Ranged:
+		weapon.currentWeapon = WeaponType::RangedAOE;
+		weapon.weaponDamage = 15;
+		SphereCol->SetSphereRadius(600.0f);
+		break;
+
+	case WeaponType::RangedAOE:
+		weapon.currentWeapon = WeaponType::Melee;
+		weapon.weaponDamage = 20;
+		SphereCol->SetSphereRadius(300.0f);
+		break;
+
+	default:
+		weapon.currentWeapon = WeaponType::Melee;
+		weapon.weaponDamage = 20;
+		SphereCol->SetSphereRadius(300.0f);
+		break;
+	}
+}
+
 void AMyCharacter::OnClicked(UPrimitiveComponent* pComponent, FKey inKey)
 {
 	int32 count = 0;
@@ -152,8 +271,6 @@ void AMyCharacter::OnClicked(UPrimitiveComponent* pComponent, FKey inKey)
 	FVector moveToLocation;
 	FVector rotationVector;
 	FRotator rotation;
-
-	FTimerHandle attackChange;
 
 	// Click on enemy
 	//for (AMyEnemy* enemy : enemies)
@@ -177,20 +294,35 @@ void AMyCharacter::OnClicked(UPrimitiveComponent* pComponent, FKey inKey)
 	//	}
 	//}
 
-	if (pComponent->GetOwner()->IsA<AMyEnemy>())
+	GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::Green, "OnClicked() called");
+	if (pComponent->GetOwner()->IsA<AMyEnemy>() && canAttack)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::MakeRandomColor(), "OnClicked() called to " + pComponent->GetOwner()->GetName());
+		if (weapon.currentWeapon == WeaponType::RangedAOE)
+		{
+			GetWorld()->SpawnActor<ARangedAOEAttack>(pComponent->GetOwner()->GetActorLocation(), FRotator());
+		}
+		else
+		{
+			canAttack = false;
+			GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::Green, "OnClicked() called");
+			FTimerDelegate attackTimeDel;
+			FTimerHandle attackChange;
 
-		rotationVector = FVector(Cast<AMyEnemy>(pComponent->GetOwner())->GetEnemyLocation() - GetActorLocation());
-		rotationVector.Normalize();
-		rotation = rotationVector.Rotation();
-		rotation.Roll = 0.f;
-		rotation.Pitch = 0.f;
-		rotation.Yaw -= 90.f;
-		GetMesh()->SetWorldRotation(rotation);
+			attackTimeDel.BindUFunction(this, FName("ChangeAttack"), pComponent->GetOwner());
 
-		attacking = true;
-		GetWorld()->GetTimerManager().SetTimer(attackChange, this, &AMyCharacter::ChangeAttack, 1.0f, false);
+			GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::MakeRandomColor(), "OnClicked() called to " + pComponent->GetOwner()->GetName());
+
+			rotationVector = FVector(Cast<AMyEnemy>(pComponent->GetOwner())->GetEnemyLocation() - GetActorLocation());
+			rotationVector.Normalize();
+			rotation = rotationVector.Rotation();
+			rotation.Roll = 0.f;
+			rotation.Pitch = 0.f;
+			rotation.Yaw -= 90.f;
+			GetMesh()->SetWorldRotation(rotation);
+
+			attacking = true;
+			GetWorld()->GetTimerManager().SetTimer(attackChange, attackTimeDel, 1.0f, false);
+		}
 	}
 
 	for (auto adjTile : walkableTiles)
@@ -256,26 +388,85 @@ void AMyCharacter::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* O
 {
 	//GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::Blue, FString("OnBeginOverlap() called With: ") + OtherActor->GetName());
 
+	if (OtherActor->IsA<AMyEnemy>())
+	{
+		if (OtherComp->IsA<UCapsuleComponent>())
+		{
+			FRandomStream FStream;
+			FStream.GenerateNewSeed();
+			float randXPosNeg = FStream.RandRange(1, 2);
+			float randYPosNeg = FStream.RandRange(1, 2);
+			float randX = FStream.RandRange(0, 5) * 200 * (randXPosNeg == 1 ? -1 : 1);
+			float randY = FStream.RandRange(0, 5) * 200 * (randYPosNeg == 1 ? -1 : 1);
+
+			if (randX > 800)
+			{
+				randX = 800;
+			}
+
+			if (randY > 800)
+			{
+				randY = 800;
+			}
+			SetActorLocation(FVector(randX, randY, GetActorLocation().Z + 500));
+		}
+	}
 	if (OtherActor->IsA<ATile>())
 	{
 		tile = (ATile*)OtherActor;
-	}
 
-	if (IsValid(tile))
-	{
-		walkableTiles = tile->GetAdjacentTiles();
-		for (auto adjTile : walkableTiles)
+		if (tile->CurrentTileType == TileType::Obstacle)
 		{
-			adjTile->PreviousTileType = adjTile->CurrentTileType;
-			adjTile->CurrentTileType = TileType::Selected;
-			adjTile->TileMesh->OnClicked.AddDynamic(this, &AMyCharacter::OnClicked);
+			FRandomStream FStream;
+			FStream.GenerateNewSeed();
+			float randXPosNeg = FStream.RandRange(1, 2);
+			float randYPosNeg = FStream.RandRange(1, 2);
+			float randX = FStream.RandRange(0, 5) * 200 * (randXPosNeg == 1 ? -1 : 1);
+			float randY = FStream.RandRange(0, 5) * 200 * (randYPosNeg == 1 ? -1 : 1);
+
+			if (randX > 800)
+			{
+				randX = 800;
+			}
+
+			if (randY > 800)
+			{
+				randY = 800;
+			}
+			SetActorLocation(FVector(randX, randY, GetActorLocation().Z));
+		}
+
+		else if (tile->CurrentTileType == TileType::Hazzard)
+		{
+			GetWorld()->GetTimerManager().SetTimer(HazzardDamageTimer, this, &AMyCharacter::HazzardDamage, 0.2f, true);
+		}
+		 
+		if (IsValid(tile))
+		{
+			walkableTiles = tile->GetAdjacentTiles();
+			tile->tileDirectionsFromPlayer.Empty();
+			for (auto adjTile : walkableTiles)
+			{
+				adjTile->PreviousTileType = adjTile->CurrentTileType;
+
+				if (adjTile->CurrentTileType == TileType::Hazzard)
+				{
+					adjTile->CurrentTileType = TileType::SelectedHazzard;
+				}
+				else
+				{
+					adjTile->CurrentTileType = TileType::Selected;
+				}
+
+				adjTile->TileMesh->OnClicked.AddDynamic(this, &AMyCharacter::OnClicked);
+			}
 		}
 	}
 }
 
 void AMyCharacter::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	//GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::Blue, FString("OnEndOverlap() called With: ") + OtherActor->GetName());
+	GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::Blue, FString("OnEndOverlap() called With: ") + OtherActor->GetName());
 
 	if (tile != nullptr)
 	{
@@ -283,10 +474,14 @@ void AMyCharacter::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* Oth
 		for (auto adjTile : walkableTiles)
 		{
 			adjTile->CurrentTileType = adjTile->PreviousTileType;
+
 			adjTile->TileMesh->OnClicked.RemoveDynamic(this, &AMyCharacter::OnClicked);
 		}
 
+		GetWorld()->GetTimerManager().ClearTimer(HazzardDamageTimer);
+
 		walkableTiles.Empty();
+		tile->tileDirectionsFromPlayer.Empty();
 		tile->foundATiles = false;
 		tile = nullptr;
 	}
@@ -296,17 +491,11 @@ void AMyCharacter::OnSphereOverlapBegin(UPrimitiveComponent* OverlappedComp, AAc
 {
 	//GEngine->AddOnScreenDebugMessage(INDEX_NONE, 100, FColor::MakeRandomColor(), FString("OnSphereBeginOverlap() called With: ") + OtherComp->GetName());
 
-	FTimerHandle attackChange;
-
 	if (OtherActor->IsA<AMyEnemy>())
 	{
 		if (OtherComp->IsA<USkeletalMeshComponent>())
 		{
-			//Cast<AMyEnemy>(OtherActor)->GetMesh()->OnClicked.AddDynamic(this, &AMyCharacter::OnClicked);
-			enemies.Add(Cast<AMyEnemy>(OtherActor));
-			enemies.Last()->GetMesh()->OnClicked.AddDynamic(this, &AMyCharacter::OnClicked);
-			//GEngine->AddOnScreenDebugMessage(INDEX_NONE, 100, FColor::MakeRandomColor(), FString("OnSphereBeginOverlap() called With: ") + OtherComp->GetName());
-			//OtherComp->OnClicked.AddDynamic(this, &AMyCharacter::OnClicked);
+			OtherComp->OnClicked.AddDynamic(this, &AMyCharacter::OnClicked);
 		}
 
 		//GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::Blue, FString("OnSphereBeginOverlap() called With: ") + OtherActor->GetName());
@@ -316,12 +505,11 @@ void AMyCharacter::OnSphereOverlapBegin(UPrimitiveComponent* OverlappedComp, AAc
 void AMyCharacter::OnSphereOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	//GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::Blue, FString("OnSphereEndOverlap() called With: ") + OtherActor->GetName());
-	for(AMyEnemy* enemy : enemies)
+	if (OtherActor->IsA<AMyEnemy>())
 	{
-		if (enemy == OtherActor)
+		if (OtherComp->IsA<USkeletalMeshComponent>())
 		{
-			enemy->GetMesh()->OnClicked.RemoveDynamic(this, &AMyCharacter::OnClicked);
-			enemies.Remove(enemy);
+			OtherComp->OnClicked.RemoveDynamic(this, &AMyCharacter::OnClicked);
 		}
 	}
 }

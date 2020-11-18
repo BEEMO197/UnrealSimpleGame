@@ -16,6 +16,7 @@ enum TileType
 	Obstacle = 1 UMETA(DisplayName = "Obstacle"),
 	Hazzard = 2 UMETA(DisplayName = "Hazzard"),
 	Selected = 3 UMETA(DisplayName = "Selected"),
+	SelectedHazzard = 4 UMETA(DisplayName = "SelectedHazzard"),
 };
 
 UENUM()
@@ -71,7 +72,10 @@ public:
 		TEnumAsByte<TileType> PreviousTileType;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-		TEnumAsByte<TileDirectionFromPlayer> tileDirectionFromPlayer;
+		TArray<TEnumAsByte<TileDirectionFromPlayer>> tileDirectionsFromPlayer;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+		bool isActorOnTile;
 
 	int32 i = 0;
 	int32 randomNumber;
@@ -85,6 +89,9 @@ public:
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 	/*~~~~~~~~~~~~~~~~~~~      VARIABLE FUNCTIONS       ~~~~~~~~~~~~~~~~~~~*/
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		TArray<TEnumAsByte<TileDirectionFromPlayer>> GetTileDirectionsFromPlayer();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		TArray<ATile*> GetAdjacentTiles();

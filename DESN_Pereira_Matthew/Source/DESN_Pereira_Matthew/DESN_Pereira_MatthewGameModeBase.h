@@ -13,5 +13,8 @@ UCLASS()
 class DESN_PEREIRA_MATTHEW_API ADESN_Pereira_MatthewGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
-	
+
+public:
+
+	ADESN_Pereira_MatthewGameModeBase();
 };

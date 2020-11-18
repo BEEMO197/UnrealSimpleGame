@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "Tile.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SphereComponent.h"
+#include "Components/WidgetComponent.h"
 #include "GameFramework/Character.h"
 #include "MyEnemy.generated.h"
 
@@ -26,7 +28,40 @@ public:
 	AActor* characterActor;
 
 	UPROPERTY(EditAnywhere)
+		UWidgetComponent* healthBar;
+
+	UPROPERTY(EditAnywhere)
+		int32 health;
+
+	UPROPERTY(EditAnywhere)
+		int32 maxHealth;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		UWidgetComponent* getHealthBarWidge();
+
+	UFUNCTION(BlueprintCallable)
+		void Damage(int32 damage);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		int32 GetHealth();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		int32 GetMaxHealth();
+
+	UPROPERTY(EditAnywhere)
 		FTimerHandle attackingTimer;
+
+	UPROPERTY(EditAnywhere)
+		bool isDying = false;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		bool GetIsDying();
+
+	UFUNCTION(BlueprintCallable)
+		void SetIsDying(bool Dying);
+
+	UFUNCTION(BlueprintCallable)
+		void DestroyDeadEnemy();
 
 	UPROPERTY(EditAnywhere)
 		bool AnimationAttack = false;
@@ -47,6 +82,9 @@ public:
 		void SetIsAttacking();
 
 	UPROPERTY(EditAnywhere)
+		USphereComponent* SphereCol;
+
+	UPROPERTY(EditAnywhere)
 		ATile* tile;
 
 	UPROPERTY(EditAnywhere)
@@ -63,6 +101,12 @@ public:
 
 	UFUNCTION()
 		void OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	UFUNCTION()
+		void OnSphereOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+		void OnSphereOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
