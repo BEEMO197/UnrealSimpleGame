@@ -150,7 +150,7 @@ void AMyCharacter::ChangeAttack(AMyEnemy* enemy)
 
 	if (enemyCount <= 0)
 	{
-		UGameplayStatics::OpenLevel(GetWorld(), "Minimal_Default");
+		UGameplayStatics::OpenLevel(GetWorld(), "GameMap");
 	}
 
 	canAttack = true;

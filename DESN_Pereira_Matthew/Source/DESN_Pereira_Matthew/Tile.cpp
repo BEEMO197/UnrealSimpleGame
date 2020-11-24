@@ -41,27 +41,27 @@ ATile::ATile()
 	UStaticMesh* Asset = MeshAsset.Object;
 	TileMesh->SetStaticMesh(Asset);
 
-	ConstructorHelpers::FObjectFinder<UMaterial>TileMaterial(TEXT("Material'/Game/StarterContent/Materials/M_CobbleStone_Pebble.M_CobbleStone_Pebble'"));
+	ConstructorHelpers::FObjectFinder<UMaterial>TileMaterial(TEXT("Material'/Game/Assets/Materials/M_CobbleStone_Pebble.M_CobbleStone_Pebble'"));
 	UMaterial* Material = TileMaterial.Object;
 
 	AvailableMaterials.Add(Material);
 
-	ConstructorHelpers::FObjectFinder<UMaterial>TileMaterial1(TEXT("Material'/Game/StarterContent/Materials/M_Brick_Clay_Beveled.M_Brick_Clay_Beveled'"));
+	ConstructorHelpers::FObjectFinder<UMaterial>TileMaterial1(TEXT("Material'/Game/Assets/Materials/M_Brick_Clay_Beveled.M_Brick_Clay_Beveled'"));
 	Material = TileMaterial1.Object;
 
 	AvailableMaterials.Add(Material);
 
-	ConstructorHelpers::FObjectFinder<UMaterial>TileMaterial2(TEXT("Material'/Game/StarterContent/Materials/M_Water_Ocean.M_Water_Ocean'"));
+	ConstructorHelpers::FObjectFinder<UMaterial>TileMaterial2(TEXT("Material'/Game/Assets/Materials/M_Water_Ocean.M_Water_Ocean'"));
 	Material = TileMaterial2.Object;
 
 	AvailableMaterials.Add(Material);
 
-	ConstructorHelpers::FObjectFinder<UMaterial>TileMaterial3(TEXT("Material'/Game/StarterContent/Materials/M_CobbleStone_Pebble_2.M_CobbleStone_Pebble_2'"));
+	ConstructorHelpers::FObjectFinder<UMaterial>TileMaterial3(TEXT("Material'/Game/Assets/Materials/M_CobbleStone_Pebble_2.M_CobbleStone_Pebble_2'"));
 	Material = TileMaterial3.Object;
 
 	AvailableMaterials.Add(Material);
 
-	ConstructorHelpers::FObjectFinder<UMaterial>TileMaterial4(TEXT("Material'/Game/StarterContent/Materials/M_Water_Ocean_2.M_Water_Ocean_2'"));
+	ConstructorHelpers::FObjectFinder<UMaterial>TileMaterial4(TEXT("Material'/Game/Assets/Materials/M_Water_Ocean_2.M_Water_Ocean_2'"));
 	Material = TileMaterial4.Object;
 
 	AvailableMaterials.Add(Material);
