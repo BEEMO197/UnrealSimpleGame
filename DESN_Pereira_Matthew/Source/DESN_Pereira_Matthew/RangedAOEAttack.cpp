@@ -15,6 +15,8 @@ ARangedAOEAttack::ARangedAOEAttack()
 	SphereCol->SetupAttachment(RootComponent);
 	SphereCol->SetSphereRadius(300.0f);
 
+	SphereCol->OnComponentBeginOverlap.AddDynamic(this, &ARangedAOEAttack::OnSphereOverlapBegin);
+	SphereCol->OnComponentEndOverlap.AddDynamic(this, &ARangedAOEAttack::OnSphereOverlapEnd);
 }
 
 // Called when the game starts or when spawned
@@ -23,8 +25,7 @@ void ARangedAOEAttack::BeginPlay()
 	Super::BeginPlay();
 	
 	rangedAOEDamage.currentWeapon = WeaponType::RangedAOE;
-
-	//UGameplayStatics::SpawnEmitterAtLocation(GetWorld(),)
+	rangedAOEDamage.weaponDamage = 25;
 }
 
 // Called every frame
@@ -32,12 +33,13 @@ void ARangedAOEAttack::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	
 }
+
 
 
 void ARangedAOEAttack::OnSphereOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-
 	if (OtherActor->IsA<AMyEnemy>())
 	{
 		if (OtherComp->IsA<USkeletalMeshComponent>())

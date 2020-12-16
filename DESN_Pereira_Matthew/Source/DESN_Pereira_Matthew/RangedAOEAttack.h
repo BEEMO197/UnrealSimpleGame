@@ -21,15 +21,14 @@ public:
 		USphereComponent* SphereCol;
 
 	Weapon rangedAOEDamage;
-
-	TSubclassOf<class UParticleSystem> Particle;
-	UParticleSystem* ParticleSystem;
-
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 public:	
+
+	void Explode();
+
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 

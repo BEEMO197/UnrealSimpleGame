@@ -50,6 +50,12 @@ public:
 	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 	UPROPERTY(EditAnywhere)
+		UParticleSystem* RangedAOEAttack;
+
+	UPROPERTY(EditAnywhere)
+		USoundBase* rangedAOEAudio;
+
+	UPROPERTY(EditAnywhere)
 		int enemyCount;
 
 	Weapon weapon;

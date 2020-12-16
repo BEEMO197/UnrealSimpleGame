@@ -45,11 +45,12 @@ AMyCharacter::AMyCharacter()
 	SphereCol->OnComponentBeginOverlap.AddDynamic(this, &AMyCharacter::OnSphereOverlapBegin);
 	SphereCol->OnComponentEndOverlap.AddDynamic(this, &AMyCharacter::OnSphereOverlapEnd);
 
+
 	// Setup Capsule Collision for movement
 	GetCapsuleComponent()->OnComponentHit.AddDynamic(this, &AMyCharacter::OnHit);
 	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AMyCharacter::OnOverlapBegin);
 	GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &AMyCharacter::OnOverlapEnd);
-
+	
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
 }
 
@@ -64,7 +65,7 @@ void AMyCharacter::BeginPlay()
 	float randYPosNeg = FStream.RandRange(1, 2);
 	float randX = FStream.RandRange(0, 5) * 200 * (randXPosNeg == 1 ? -1 : 1);
 	float randY = FStream.RandRange(0, 5) * 200 * (randYPosNeg == 1 ? -1 : 1);
-
+	
 	if (randX > 800)
 	{
 		randX = 800;
@@ -141,13 +142,21 @@ FVector AMyCharacter::getCharacterLocation()
 
 void AMyCharacter::ChangeAttack(AMyEnemy* enemy)
 {
-	enemy->Damage(weapon.weaponDamage);
-	if (enemy->GetHealth() <= 0)
+	if (weapon.currentWeapon == WeaponType::RangedAOE)
 	{
-		enemyCount--;
-		enemy->SetIsDying(true);
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AMyEnemy::StaticClass(), enemies);
+		enemyCount = enemies.Num();
 	}
+	else
+	{
+		enemy->Damage(weapon.weaponDamage);
 
+		if (enemy->GetHealth() <= 0)
+		{
+			enemyCount--;
+			enemy->SetIsDying(true);
+		}
+	}
 	if (enemyCount <= 0)
 	{
 		UGameplayStatics::OpenLevel(GetWorld(), "GameMap");
@@ -297,32 +306,31 @@ void AMyCharacter::OnClicked(UPrimitiveComponent* pComponent, FKey inKey)
 	GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::Green, "OnClicked() called");
 	if (pComponent->GetOwner()->IsA<AMyEnemy>() && canAttack)
 	{
+		canAttack = false;
+
+		rotationVector = FVector(Cast<AMyEnemy>(pComponent->GetOwner())->GetEnemyLocation() - GetActorLocation());
+		rotationVector.Normalize();
+		rotation = rotationVector.Rotation();
+		rotation.Roll = 0.f;
+		rotation.Pitch = 0.f;
+		rotation.Yaw -= 90.f;
+		GetMesh()->SetWorldRotation(rotation);
+
+		attacking = true;
 		if (weapon.currentWeapon == WeaponType::RangedAOE)
 		{
 			GetWorld()->SpawnActor<ARangedAOEAttack>(pComponent->GetOwner()->GetActorLocation(), FRotator());
+			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), RangedAOEAttack, pComponent->GetOwner()->GetActorLocation(), FRotator());
+			UGameplayStatics::PlaySoundAtLocation(GetWorld(), rangedAOEAudio, pComponent->GetOwner()->GetActorLocation());
+			
 		}
-		else
-		{
-			canAttack = false;
-			GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::Green, "OnClicked() called");
-			FTimerDelegate attackTimeDel;
-			FTimerHandle attackChange;
 
-			attackTimeDel.BindUFunction(this, FName("ChangeAttack"), pComponent->GetOwner());
+		FTimerDelegate attackTimeDel;
+		FTimerHandle attackChange;
 
-			GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::MakeRandomColor(), "OnClicked() called to " + pComponent->GetOwner()->GetName());
+		attackTimeDel.BindUFunction(this, FName("ChangeAttack"), pComponent->GetOwner());
 
-			rotationVector = FVector(Cast<AMyEnemy>(pComponent->GetOwner())->GetEnemyLocation() - GetActorLocation());
-			rotationVector.Normalize();
-			rotation = rotationVector.Rotation();
-			rotation.Roll = 0.f;
-			rotation.Pitch = 0.f;
-			rotation.Yaw -= 90.f;
-			GetMesh()->SetWorldRotation(rotation);
-
-			attacking = true;
-			GetWorld()->GetTimerManager().SetTimer(attackChange, attackTimeDel, 1.0f, false);
-		}
+		GetWorld()->GetTimerManager().SetTimer(attackChange, attackTimeDel, 1.0f, false);
 	}
 
 	for (auto adjTile : walkableTiles)

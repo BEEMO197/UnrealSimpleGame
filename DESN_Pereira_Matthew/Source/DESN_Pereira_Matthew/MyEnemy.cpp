@@ -98,10 +98,16 @@ void AMyEnemy::Damage(int32 damage)
 	DamagePrnt.Append(" / ");
 	DamagePrnt.AppendInt(maxHealth);
 
+	DamagePrnt.Append(", Damage Dealt: ");
+	DamagePrnt.AppendInt(damage);
+
+	health -= damage;
+
+	DamagePrnt.Append(", Current Health: ");
+	DamagePrnt.AppendInt(health);
 
 	GEngine->AddOnScreenDebugMessage(-1, 5.0, FColor::Turquoise, DamagePrnt);
 
-	health -= damage;
 }
 
 int32 AMyEnemy::GetHealth()
